@@ -1,0 +1,50 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+[啟用 minikube ingress]
+minikube addons enable ingress
+kubectl get all -n ingress-nginx
+
+# 部署 beta-all
+kubectl apply -f beta-app-all.yaml
+kubectl get all -n app-ns
+
+# 建立 ingress defaultbackend
+vi ingress-defaultbackend.yaml
+=====
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-defaultbackend
+  namespace: app-ns
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: beta-app-service-clusterip
+      port:
+        number: 8080
+=====
+
+# 部署 ingress defaultbackend
+kubectl apply -f ingress-defaultbackend.yaml
+kubectl get ingress -n app-ns
+kubectl describe ingress ingress-defaultbackend -n app-ns
+kubectl get ingress -n app-ns -w
+(wating)
+
+# 測試連線
+curl [ingress_ip]:80
+curl [ingress_ip]:80
+curl [ingress_ip]:80
+curl [ingress_ip]:80
+curl [ingress_ip]:80
+
+# 完成！
+
+

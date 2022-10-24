@@ -1,0 +1,33 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 建立 pod
+vi simple-pod.yaml
+=====
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+  - name: app-container
+    image: uopsdod/k8s-hostname-amd64-beta:v1
+    ports:
+    - containerPort: 80
+=====
+
+# 部署 pod
+kubectl apply -f simple-pod.yaml
+kubectl get pods
+kubectl get pods -w
+
+# 資源清理
+kubectl delete pods --all
+
+# 完成！
+

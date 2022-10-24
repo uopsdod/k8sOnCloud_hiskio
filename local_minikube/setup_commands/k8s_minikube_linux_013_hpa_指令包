@@ -1,0 +1,124 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 啟用 minikube ingress 
+minikube addons enable ingress
+kubectl get all -n ingress-nginx
+
+# 建立 beta all hpa
+cp beta-app-all.yaml beta-app-all-hpa.yaml
+vi beta-app-all-hpa.yaml
+(modify replicas)
+(add resources limits and requests)
+=====
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beta-app-deployment
+  namespace: app-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beta-app-pod
+  template:
+    metadata:
+      labels:
+        app: beta-app-pod
+    spec:
+      containers:
+      - name: beta-app-container
+        image: uopsdod/k8s-hostname-amd64-beta:v1
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+          requests:
+            cpu: 200m
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beta-app-service-clusterip
+  namespace: app-ns
+spec:
+  type: ClusterIP
+  selector:
+    app: beta-app-pod
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+---
+=====
+
+# 部署 beta all hpa
+kubectl apply -f beta-app-all-hpa.yaml
+kubectl get all -n app-ns
+
+# 部署 prod all
+kubectl apply -f prod-app-all.yaml
+kubectl get all -n app-ns
+
+# 部署 ingress-path
+kubectl apply -f ingress-path.yaml
+kubectl get ingress -n app-ns
+kubectl get ingress -n app-ns -w
+
+# 建立 metric server
+wget https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+mv components.yaml metrics-server.yaml 
+vi metrics-server.yaml 
+(add container argument: --kubelet-insecure-tls)
+=====
+...
+    spec:
+      containers:
+      - args:
+        - --cert-dir=/tmp
+        - --secure-port=4443
+        - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+        - --kubelet-use-node-status-port
+        - --metric-resolution=15s
+        - --kubelet-insecure-tls
+        image: k8s.gcr.io/metrics-server/metrics-server:v0.6.1
+...
+=====
+
+kubectl apply -f metrics-server.yaml 
+kubectl get deployment metrics-server -n kube-system 
+kubectl get deployment metrics-server -n kube-system -w
+
+# 部署 hpa
+kubectl autoscale deployment beta-app-deployment --cpu-percent=10 --min=1 --max=10 -n app-ns
+kubectl get hpa -n app-ns
+kubectl get hpa -n app-ns -w
+
+# 測試 auto scaling up 
+(open another terminal)
+kubectl get ingress -n app-ns
+ingress_ip=192.168.49.2
+curl ${ingress_ip}:80/beta -H 'Host: all.demo.com'
+while sleep 0.005; do curl -s ${ingress_ip}:80/beta -H 'Host: all.demo.com'; done
+
+# 測試 auto scaling down
+(open another terminal)
+Ctrl + C
+
+# 資源清理
+kubectl delete namespace app-ns
+
+# 完成！
+
+

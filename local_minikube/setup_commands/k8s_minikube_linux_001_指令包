@@ -1,0 +1,87 @@
+
+# 安裝 & 啟動 docker
+sudo yum install docker -y
+sudo usermod -aG docker $USER && newgrp docker
+sudo service docker start
+docker ps
+
+# 安裝 minikube (https://phoenixnap.com/kb/install-minikube-on-centos)
+wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube-linux-amd64
+sudo mv minikube-linux-amd64 /usr/local/bin/minikube
+minikube version
+minikube status
+
+# 建立 cluster
+minikube start --driver docker
+docker ps
+minikube kubectl -- get pods -A
+
+# 建立 kubectl 快捷鍵
+vi ~/.bashrc
+alias kubectl='minikube kubectl -- '
+source ~/.bashrc
+kubectl get pods -A
+
+# 查看實際運算節點
+kubectl get nodes
+kubectl describe nodes minikube
+
+----- - ----- - ----- 
+
+# 部署 deployments
+kubectl create deployment hello-minikube --image=k8s.gcr.io/echoserver:1.4
+kubectl get deployments
+kubectl describe deployments hello-minikube
+(wait...)
+kubectl get pods
+kubectl describe pods [pod_name]
+
+# 查看 pods 分佈到哪個 node 之中
+kubectl get nodes
+kubectl describe nodes minikube
+
+# 開放 service 
+kubectl expose deployment hello-minikube --port=8080
+kubectl get services
+kubectl describe services hello-minikube
+
+# 直接進入 docker container 測試連線
+kubectl get services
+docker ps
+docker exec -it minikube bash
+curl [service_ip]:8080
+exit
+
+# 開通本地到 cluster 連線 (localhost -> service)
+kubectl port-forward service/hello-minikube 8081:8080 &
+(press enter to get to the next line)
+curl localhost:8081
+
+# 關閉本地到 cluster 連線
+ps
+kill [kubectl_PID]
+(press enter to get to the next line)
+ps
+
+# 刪除 service
+kubectl get services
+kubectl delete service hello-minikube
+kubectl get service
+
+# 刪除 deployments
+kubectl get deployments
+kubectl delete deployment hello-minikube
+kubectl get deployments
+kubectl get pods
+
+# 刪除 cluster (optional)
+minikube status
+minikube stop
+minikube delete
+minikube status
+
+# 刪除 docker (optional)
+sudo yum remove docker -y
+
+# 完成！

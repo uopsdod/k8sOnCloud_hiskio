@@ -1,0 +1,42 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 部署 deployment
+kubectl apply -f simple-deployment.yaml
+kubectl get deployments
+
+# 建立 service
+vi simple-service-nodeport.yaml
+=====
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service-nodeport
+spec:
+  type: NodePort
+  selector:
+    app: app-pod
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+=====
+
+# 部署 service
+kubectl apply -f simple-service-nodeport.yaml
+kubectl get services
+kubectl describe service app-service-nodeport
+kubectl get nodes
+kubectl describe node minikube
+(find ip)
+
+# 測試連線
+kubectl get services
+curl [node_ip]:[node_exposed_port]
+
+# 完成！

@@ -1,0 +1,47 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 建立 replica set
+vi simple-replicaset.yaml
+=====
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: app-rs
+spec: 
+  replicas: 3
+  selector: 
+    matchLabels:
+      app: app-pod
+  template: 
+    metadata: 
+      labels:
+        app: app-pod
+    spec:
+      containers:
+      - name: app-container
+        image: uopsdod/k8s-hostname-amd64-beta:v1
+        ports:
+        - containerPort: 80
+=====
+
+# 部署 rs
+kubectl apply -f simple-replicaset.yaml
+kubectl get rs
+kubectl get pods
+(waiting...)
+kubectl get pods
+
+# 測試 rs 狀態維持機制
+kubectl delete pods --all
+
+# 資源清理
+kubectl delete rs --all
+
+# 完成！
+

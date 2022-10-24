@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+spec:
+  containers:
+  - name: app-container
+    image: uopsdod/k8s-hostname-amd64-beta:v1
+    ports:
+    - containerPort: 80

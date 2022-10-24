@@ -1,0 +1,64 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+[啟用 minikube ingress]
+minikube addons enable ingress
+kubectl get all -n ingress-nginx
+
+# 部署 beta all
+kubectl apply -f beta-app-all.yaml
+kubectl get all -n app-ns
+
+# 部署 prod all
+kubectl apply -f prod-app-all.yaml
+kubectl get all -n app-ns
+
+# 建立 ingress-path.yaml
+vi ingress-path.yaml
+=====
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-path
+  namespace: app-ns
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: all.demo.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: /beta
+        backend:
+          service:
+            name: beta-app-service-clusterip
+            port:
+              number: 8080
+      - pathType: Prefix
+        path: /prod
+        backend:
+          service:
+            name: prod-app-service-clusterip
+            port:
+              number: 8080
+=====
+
+# 部署 ingress-path
+kubectl apply -f ingress-path.yaml
+kubectl get ingress -n app-ns
+
+# 測試連線
+curl [ingress_ip]:80/beta -H 'Host: all.demo.com'
+curl [ingress_ip]:80/prod -H 'Host: all.demo.com'
+
+# 資源清理
+kubectl delete ns app-ns
+
+# 完成！
+
+

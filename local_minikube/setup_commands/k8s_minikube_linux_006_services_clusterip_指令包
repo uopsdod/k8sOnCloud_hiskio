@@ -1,0 +1,46 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 部署 deployment
+kubectl apply -f simple-deployment.yaml
+kubectl get deployments
+
+# 建立 service
+vi simple-service-clusterip.yaml
+=====
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service-clusterip
+spec:
+  type: ClusterIP
+  selector:
+    app: app-pod
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+=====
+
+# 部署 service
+kubectl apply -f simple-service-clusterip.yaml
+kubectl get services
+kubectl describe service app-service
+
+# 直接進入 docker container 測試連線
+kubectl get services
+docker ps
+docker exec -it minikube bash
+curl [service_ip]:8080
+curl [service_ip]:8080
+curl [service_ip]:8080
+curl [service_ip]:8080
+curl [service_ip]:8080
+exit
+
+# 完成！

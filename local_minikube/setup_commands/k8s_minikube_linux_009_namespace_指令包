@@ -1,0 +1,66 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 建立 namespace
+vi beta-app-all.yaml
+=====
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: app-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beta-app-deployment
+  namespace: app-ns
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: beta-app-pod
+  template:
+    metadata:
+      labels:
+        app: beta-app-pod
+    spec:
+      containers:
+      - name: beta-app-container
+        image: uopsdod/k8s-hostname-amd64-beta:v1
+        ports: 
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beta-app-service-clusterip
+  namespace: app-ns
+spec:
+  selector:
+    app: beta-app-pod
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+=====
+
+# 部署 beta all
+kubectl apply -f beta-app-all.yaml
+kubectl get ns
+kubectl get all
+kubectl get all --namespace app-ns
+kubectl get all -n app-ns
+
+# 資源清理
+kubectl delete ns app-ns
+kubectl get ns
+kubectl get all -n app-ns
+
+# 完成！
+
+

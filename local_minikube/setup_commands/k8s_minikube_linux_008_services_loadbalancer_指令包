@@ -1,0 +1,53 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 部署 deployment
+kubectl apply -f simple-deployment.yaml
+kubectl get deployments
+
+# 建立 service
+vi simple-service-loadbalancer.yaml
+=====
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service-loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: app-pod
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 80
+=====
+
+# 部署 service
+kubectl apply -f simple-service-loadbalancer.yaml
+kubectl get services
+kubectl describe service app-service-loadbalancer
+
+# 建立本地 loadbalancer 
+(open another terminal)
+minikube tunnel
+
+# 測試連線
+kubectl get services
+curl [service_external_ip]:8080
+curl [service_external_ip]:8080
+curl [service_external_ip]:8080
+curl [service_external_ip]:8080
+curl [service_external_ip]:8080
+
+# 資源清理
+kubectl delete all --all
+Ctrl + C (minikube tunnel)
+
+# 完成！
+
+
