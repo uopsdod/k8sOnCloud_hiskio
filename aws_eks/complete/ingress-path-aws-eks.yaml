@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-path
+  namespace: app-ns
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+  - host: all.demo.com
+    http:
+      paths:
+      - pathType: Prefix
+        path: /beta
+        backend:
+          service:
+            name: beta-app-service-clusterip
+            port:
+              number: 8080
+      - pathType: Prefix
+        path: /prod
+        backend:
+          service:
+            name: prod-app-service-clusterip
+            port:
+              number: 8080        
