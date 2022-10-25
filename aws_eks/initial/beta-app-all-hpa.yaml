@@ -9,7 +9,7 @@ metadata:
   name: beta-app-deployment
   namespace: app-ns
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: beta-app-pod
@@ -23,6 +23,11 @@ spec:
         image: uopsdod/k8s-hostname-amd64-beta:v1
         ports:
         - containerPort: 80
+        resources:
+          limits:
+            cpu: 300m
+          requests:
+            cpu: 200m
 ---
 apiVersion: v1
 kind: Service
