@@ -18,8 +18,8 @@ spec:
         ports:
         - containerPort: 80
         volumeMounts:
-          - mountPath: /app/data
-            name: app-volume
+          - name: app-volume
+            mountPath: /app/data
       volumes:
         - name: app-volume
           persistentVolumeClaim:
