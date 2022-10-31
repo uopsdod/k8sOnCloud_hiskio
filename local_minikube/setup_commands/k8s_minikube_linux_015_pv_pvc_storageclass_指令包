@@ -1,0 +1,59 @@
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 查看 default storageclass
+kubectl get storageclass
+
+# 建立 Persistent Volume Claim (PVC)
+cp simple-volume-pvc.yaml dynamic-volume-pvc.yaml
+vi dynamic-volume-pvc.yaml
+ - modify storageClassName
+=====
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-pvc
+spec:
+  storageClassName: standard
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 2Gi
+=====
+
+# 部署 Persistent Volume Claim (PVC)
+kubectl apply -f dynamic-volume-pvc.yaml
+kubectl get pvc
+
+# 查看 自動建立的 PV
+kubectl get pv
+
+# 部署 simple-deployment-pvc
+kubectl apply -f simple-deployment-volume.yaml
+kubectl get deployments
+kubectl describe deployments app-deployment
+ - check mounts path
+
+# 測試 volume 生命週期
+kubectl get pods
+kubectl exec -it [pod_name] -- touch /app/data/file002.txt
+kubectl exec -it [pod_name] -- ls /app/data
+
+kubectl delete pods --all
+kubectl get pods
+
+kubectl exec -it [pod_name] -- ls /app/data
+
+# 資源清理
+kubectl delete deployments --all
+kubectl delete pvc --all
+kubectl delete pv --all
+
+# 完成！
+

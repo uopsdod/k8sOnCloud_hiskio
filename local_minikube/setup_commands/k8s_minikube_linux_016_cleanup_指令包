@@ -1,0 +1,10 @@
+
+# 刪除 cluster (optional)
+minikube stop
+minikube delete
+minikube status
+
+# 刪除 ec2
+
+# 完成！
+

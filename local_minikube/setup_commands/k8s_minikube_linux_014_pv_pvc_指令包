@@ -7,7 +7,6 @@ minikube start --driver docker
 minikube status
 
 # 建立 Persistent Volume (PV)
-kubectl get storageclass
 vi simple-volume-pv.yaml
 =====
 apiVersion: v1
@@ -15,12 +14,12 @@ kind: PersistentVolume
 metadata:
   name: app-pv
 spec:
-  storageClassName: standard
+  storageClassName: sc-001
   volumeMode: Filesystem
   capacity:
     storage: 2Gi
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   hostPath:
     path: /data
     type: DirectoryOrCreate
@@ -38,12 +37,12 @@ kind: PersistentVolumeClaim
 metadata:
   name: app-pvc
 spec:
-  storageClassName: standard
+  storageClassName: sc-001
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
-      storage: 1Gi
+      storage: 2Gi
 =====
 
 # 部署 Persistent Volume Claim (PVC)
@@ -51,8 +50,10 @@ kubectl apply -f simple-volume-pvc.yaml
 kubectl get pvc
 
 # 建立 simple-deployment-pvc
-cp simple-deployment.yaml simple-deployment-pvc.yaml
-vi simple-deployment-pvc.yaml
+cp simple-deployment.yaml simple-deployment-volume.yaml
+vi simple-deployment-volume.yaml
+ - add volumes
+ - add volumesMount
 =====
 apiVersion: apps/v1
 kind: Deployment
@@ -74,8 +75,8 @@ spec:
         ports:
         - containerPort: 80
         volumeMounts:
-          - mountPath: /app/data
-            name: app-volume
+          - name: app-volume
+            mountPath: /app/data
       volumes:
         - name: app-volume
           persistentVolumeClaim:
@@ -83,42 +84,31 @@ spec:
 =====
 
 # 部署 simple-deployment-pvc
-kubectl apply -f simple-deployment-pvc.yaml
+kubectl apply -f simple-deployment-volume.yaml
 kubectl get deployments
 kubectl describe deployments app-deployment
+ - check mounts path
 
 # 測試 volume 生命週期
 kubectl get pods
-kubectl exec -it [pod_name] -- bash
-  cd /app/data
-  ls
-  touch file001.txt
-  ls
-  exit
+kubectl exec -it [pod_name] -- touch /app/data/file001.txt
+kubectl exec -it [pod_name] -- ls /app/data
 
 kubectl delete pods --all
 kubectl get pods
-kubectl exec -it [pod_name] -- bash
-  cd /app/data
-  ls
-  exit
+
+kubectl exec -it [pod_name] -- ls /app/data
 
 # 真正的硬碟位置
+kubectl describe pv
+ - check source path
 docker ps
-docker exec -it minikube bash
-  cd /data
-  ls
-  exit
+docker exec -it minikube ls /data
 
 # 資源清理
 kubectl delete deployments --all
 kubectl delete pvc --all
 kubectl delete pv --all
-
-# 刪除 cluster (optional)
-minikube stop
-minikube delete
-minikube status
 
 # 完成！
 

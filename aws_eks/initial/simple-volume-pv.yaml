@@ -3,7 +3,7 @@ kind: PersistentVolume
 metadata:
   name: app-pv
 spec:
-  storageClassName: standard
+  storageClassName: sc-001
   volumeMode: Filesystem
   capacity:
     storage: 2Gi
@@ -12,3 +12,4 @@ spec:
   hostPath:
     path: /data
     type: DirectoryOrCreate
+
