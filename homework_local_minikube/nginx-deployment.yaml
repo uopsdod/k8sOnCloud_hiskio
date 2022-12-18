@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: app-pod
+  template:
+    metadata:
+      labels:
+        app: app-pod
+    spec:
+      containers:
+      - name: app-container
+        image: nginx:1.23
+        ports: 
+        - containerPort: 80

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apache-app-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: apache-app-pod
+  template:
+    metadata:
+      labels:
+        app: apache-app-pod
+    spec:
+      containers:
+      - name: app-container
+        image: uopsdod/myimage:latest
+        ports: 
+        - containerPort: 80
