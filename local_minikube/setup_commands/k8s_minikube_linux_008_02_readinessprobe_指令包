@@ -1,0 +1,104 @@
+
+# 啟動 docker
+sudo service docker start
+docker ps
+
+# 建立 cluster
+minikube start --driver docker
+minikube status
+
+# 建立 deployment 
+vi advanced-deployment.yaml
+- add readinessProbe section
+=====
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: app-pod
+  template:
+    metadata:
+      labels:
+        app: app-pod
+    spec:
+      containers:
+      - name: app-container
+        image: uopsdod/k8s-hostname-amd64-beta:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        startupProbe:
+          httpGet:
+            path: /healthcheck
+            port: 80
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 10
+          successThreshold: 1
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthcheck
+            port: 80
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 1
+          successThreshold: 1
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /healthcheck_dependency
+            port: 80
+          initialDelaySeconds: 0
+          timeoutSeconds: 1
+          periodSeconds: 1
+          successThreshold: 5
+          failureThreshold: 7
+=====
+cat advanced-deployment.yaml
+
+# 部署 deployment 
+kubectl apply -f advanced-deployment.yaml
+
+# 監控 rs
+kubectl get rs -w
+
+# 監控
+(in a new tab)
+kubectl get pods -w
+
+# 部署 service
+kubectl apply -f simple-service-nodeport.yaml
+
+kubectl get node
+kubectl describe node minikube
+NODE_IP=192.168.49.2
+
+kubectl get services
+NODE_PORT=3XXXX
+
+# 模擬 healthcheck 失敗狀況
+curl http://${NODE_IP}:${NODE_PORT}/healthcheck_dependency_switchstatus
+
+# 監控
+(in a new tab)
+- expect to see "Ready 0/1"
+
+# 測試
+curl http://${NODE_IP}:${NODE_PORT}/
+
+# 監控
+kubectl describe pod [pod_id]
+- expect to see "Readiness probe failed: HTTP probe failed with statuscode: 500"
+
+# 刪除 deployment
+kubectl delete deployments --all
+kubectl delete services --all
+
+# 完成!
+
+
